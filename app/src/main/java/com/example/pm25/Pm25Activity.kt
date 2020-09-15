@@ -59,7 +59,7 @@ class Pm25Activity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener(::clickAddButton)
         findViewById<RecyclerView>(R.id.dlist).adapter = mainList
-        startService(Intent(SensorService::class.qualifiedName))
+        startService(Intent(this, SensorService::class.java))
 
     }
 
