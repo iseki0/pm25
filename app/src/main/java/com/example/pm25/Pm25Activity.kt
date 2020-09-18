@@ -1,14 +1,10 @@
 package com.example.pm25
 
 import android.bluetooth.BluetoothManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.location.LocationManager
 import android.os.Build
-import android.os.IBinder
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,7 +19,7 @@ import com.google.android.material.snackbar.Snackbar
 private val neededPermissions =
     arrayOf("android.permission.BLUETOOTH", "android.permission.ACCESS_FINE_LOCATION")
 
-class DeviceListAdapter(val context: Context) :
+class DeviceListAdapter(context: Context) :
     RecyclerView.Adapter<DeviceListAdapter.ViewHolder>() {
     private val devs = mutableListOf<Any>()
 
@@ -48,27 +44,15 @@ class DeviceListAdapter(val context: Context) :
 
 }
 
+
 class Pm25Activity : AppCompatActivity() {
     private val bleManager by lazy { getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager }
     private val bleAdapter by lazy { bleManager.adapter!! }
     private val locationManager by lazy { getSystemService(Context.LOCATION_SERVICE) as LocationManager }
     private val scanner by lazy { BleScanner(this, bleAdapter) }
 
-    private var serviceBind = false
-    private lateinit var sensorService: SensorService
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-            sensorService = (service as SensorService.LocalBinder).service
-            Log.d("activity", "service connected: $name")
-            serviceBind = true
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            Log.d("activity", "service disconnected: $name")
-            serviceBind = false
-        }
-
-    }
+    private val serviceConnection =
+        localServiceConnection<SensorService, SensorService.LocalBinder>()
 
     private val mainList by lazy { DeviceListAdapter(this) }
 
@@ -79,7 +63,7 @@ class Pm25Activity : AppCompatActivity() {
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener(::clickAddButton)
         findViewById<RecyclerView>(R.id.dlist).adapter = mainList
         startService(Intent(this, SensorService::class.java))
-        if (!serviceBind)
+        if (!serviceConnection.isBind)
             bindService(
                 Intent(this, SensorService::class.java),
                 serviceConnection,
@@ -89,7 +73,7 @@ class Pm25Activity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        if (serviceBind)
+        if (serviceConnection.isBind)
             unbindService(serviceConnection)
     }
 
