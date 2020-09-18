@@ -9,6 +9,7 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.location.LocationManager
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -152,10 +153,12 @@ class BleScanner(val context: Context, val bluetoothAdapter: BluetoothAdapter) {
     }
 
     fun doScan() {
+        Log.d("scanner", "start")
         runCatching { bluetoothAdapter.bluetoothLeScanner.startScan(handler) }
     }
 
     fun stopScan() {
+        Log.d("scanner", "stop")
         runCatching { bluetoothAdapter.bluetoothLeScanner.stopScan(handler) }
     }
 

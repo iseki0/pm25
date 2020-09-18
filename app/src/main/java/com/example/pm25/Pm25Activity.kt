@@ -1,10 +1,14 @@
 package com.example.pm25
 
 import android.bluetooth.BluetoothManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.location.LocationManager
 import android.os.Build
+import android.os.IBinder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -49,7 +53,22 @@ class Pm25Activity : AppCompatActivity() {
     private val bleAdapter by lazy { bleManager.adapter!! }
     private val locationManager by lazy { getSystemService(Context.LOCATION_SERVICE) as LocationManager }
     private val scanner by lazy { BleScanner(this, bleAdapter) }
-    private var devicesModified = false
+
+    private var serviceBind = false
+    private lateinit var sensorService: SensorService
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder) {
+            sensorService = (service as SensorService.LocalBinder).service
+            Log.d("activity", "service connected: $name")
+            serviceBind = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            Log.d("activity", "service disconnected: $name")
+            serviceBind = false
+        }
+
+    }
 
     private val mainList by lazy { DeviceListAdapter(this) }
 
@@ -60,16 +79,20 @@ class Pm25Activity : AppCompatActivity() {
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener(::clickAddButton)
         findViewById<RecyclerView>(R.id.dlist).adapter = mainList
         startService(Intent(this, SensorService::class.java))
-
+        if (!serviceBind)
+            bindService(
+                Intent(this, SensorService::class.java),
+                serviceConnection,
+                Context.BIND_AUTO_CREATE
+            )
     }
 
-    override fun onPause() {
-        super.onPause()
-        if (devicesModified) {
-            TODO()
-            devicesModified = false
-        }
+    override fun onStop() {
+        super.onStop()
+        if (serviceBind)
+            unbindService(serviceConnection)
     }
+
 
     private fun clickAddButton(view: View) {
         if (!(ensureBTEnabled() && ensureLocationEnabled() && checkNeededPermission())) return
@@ -79,7 +102,6 @@ class Pm25Activity : AppCompatActivity() {
             .setAdapter(scanner.viewAdapter) { _, i ->
                 scanner.stopScan()
                 val device = scanner.viewAdapter.getItem(i)
-
                 Snackbar.make(findViewById(R.id.root_view), "selected", Snackbar.LENGTH_SHORT)
                     .show()
 
@@ -103,6 +125,7 @@ class Pm25Activity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setMessage("Location is required.")
             .setPositiveButton("Ok") { _, _ -> startLocationActivity() }
+            .show()
         return false
     }
 

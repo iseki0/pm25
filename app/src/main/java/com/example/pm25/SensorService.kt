@@ -4,7 +4,6 @@ import android.app.Service
 import android.bluetooth.*
 import android.content.Context
 import android.content.Intent
-import android.location.LocationManager
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
@@ -24,7 +23,7 @@ class Device(val info: DeviceInfo) {
 class SensorService : Service() {
     private val bluetoothManager by lazy { getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager }
     private val bluetoothAdapter by lazy { bluetoothManager.adapter!! }
-    private val locationManager by lazy { getSystemService(Context.LOCATION_SERVICE) as LocationManager }
+//    private val locationManager by lazy { getSystemService(Context.LOCATION_SERVICE) as LocationManager }
 
 
     private val devices by lazy {
@@ -51,20 +50,30 @@ class SensorService : Service() {
         check(BluetoothAdapter.checkBluetoothAddress(device.info.address)) { "device address invalid" }
         val dev = bluetoothAdapter.getRemoteDevice(device.info.address)!!
         if (device.connectStatus.value != DeviceConnectStatus.DISCONNECTED) {
-            Log.d("service", "device can't connect")
+            Log.e("service", "device.connect != DISCONNECTED")
             return
         }
         Log.d("service", "try connect")
         dev.connectGatt(this, false, object : BluetoothGattCallback() {
+            lateinit var rx: BluetoothGattCharacteristic
+            lateinit var tx: BluetoothGattCharacteristic
+            override fun onCharacteristicChanged(
+                gatt: BluetoothGatt,
+                characteristic: BluetoothGattCharacteristic
+            ) {
+                Log.d("service", "${rx == characteristic}")
+            }
+
             override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
                 when (newState) {
                     BluetoothProfile.STATE_CONNECTED -> {
                         Log.d("service", "device connected, status = $status")
                         val service = gatt.getService(UART_SERVICE)!!
-                        val rx = service.getCharacteristic(UART_RX)
-                        val tx = service.getCharacteristic(UART_TX)
+                        rx = service.getCharacteristic(UART_RX)
+                        tx = service.getCharacteristic(UART_TX)
                         gatt.setCharacteristicNotification(rx, true)
                         device.connectStatus.postValue(DeviceConnectStatus.CONNECTED)
+
                     }
                     BluetoothProfile.STATE_DISCONNECTED -> {
                         Log.d("service", "device disconnect, status = $status:")
@@ -96,10 +105,12 @@ class SensorService : Service() {
     }
 
     override fun onCreate() {
+        Log.d("service", "onCreate")
         devices
     }
 
     override fun onDestroy() {
+        Log.d("service", "onDestroy")
         if (needSave) saveConfig()
     }
 
@@ -162,19 +173,26 @@ fun parsePacket(buf: ByteArray) {
             acc + byte
         }
     }
-    when (buf[1]) {
-        0x01.toByte() -> Shutdown()
-        0x08.toByte() -> MeasurementInterval(buf.sliceArray(2 size 4).toInt())
-        0x09.toByte() -> SetRTC(buf.sliceArray(2 size 4).toInt())
-        0x0a.toByte() -> NoMoreHistory(buf[2])
-        0x0b.toByte() -> History(buf.sliceArray(2 size 2).toInt(), buf.sliceArray(6 size 4).toInt())
-        0x16.toByte() -> MeasurementEnabled(buf[2] == 1.toByte())
-        0x50.toByte() -> when (buf[2]) {
-
+    buf.apply {
+        when (buf[1]) {
+            b(0x01) -> Shutdown()
+            b(0x08) -> MeasurementInterval(int(2 size 4))
+            b(0x09) -> SetRTC(int(2 size 4))
+            b(0x0a) -> NoMoreHistory(buf[2])
+            b(0x0b) -> History(int(2 size 2), int(6 size 4))
+            b(0x16) -> MeasurementEnabled(int(2 size 1) == 1)
+            b(0x50) -> when (buf[2]) {
+                b(0x04) -> Battery(int(3 size 1), int(6 size 1) == 1)
+                b(0x05) -> HardwareRuntime(int(3 size 4), int(7 size 4))
+                b(0x06) -> SensorData(int(3 size 2), int(7 size 4), get(0x0b), int(0x0c size 4))
+                b(0x07) -> MeasurementSetup(int(3 size 2), int(5 size 1) == 1)
+            }
+            b(0x54) -> VersionPacket(int(2 size 2), int(4 size 2))
         }
     }
 }
 
-inline fun bytes2Int(bs: ByteArray) = bs.fold(0) { acc, byte -> (acc shl 8) + byte }
-inline fun ByteArray.toInt() = bytes2Int(this)
-inline infix fun Int.size(size: Int) = this until this + size
+private inline fun b(i: Int) = i.toByte()
+private inline fun ByteArray.int(range: IntRange) = bytes2Int(sliceArray(range))
+private inline fun bytes2Int(bs: ByteArray) = bs.fold(0) { acc, byte -> (acc shl 8) + byte }
+private inline infix fun Int.size(size: Int) = this until this + size
