@@ -6,8 +6,8 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.util.Log
 
-class BleScanner(val context: Context, val bluetoothAdapter: BluetoothAdapter) {
-    val viewAdapter = BLEAdapter(context)
+class BleScanner(context: Context, val bluetoothAdapter: BluetoothAdapter) {
+    val viewAdapter = BleAdapter(context)
     var scanning = false
         private set
     private val handler = object : ScanCallback() {

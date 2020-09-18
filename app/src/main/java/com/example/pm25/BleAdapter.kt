@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
 
-class BLEAdapter(context: Context) : BaseAdapter() {
+class BleAdapter(context: Context) : BaseAdapter() {
 
     private val inflater = LayoutInflater.from(context)!!
     private val list = ArrayList<Pair<String, BluetoothDevice>>()
