@@ -17,16 +17,17 @@ sealed class DeviceMessage(val type: Type) {
     }
 }
 
-class Shutdown : DeviceMessage(Type.SHUTDOWN)
-class MeasurementInterval(val interval: Int) : DeviceMessage(Type.MEASUREMENT_INTERVAL)
-class SetRTC(val timestamp: Int) : DeviceMessage(Type.SET_RTC)
-class NoMoreHistory(unknown: Byte) : DeviceMessage(Type.NO_MORE_HISTORY)
-class History(val pm25: Int, val timestamp: Int) : DeviceMessage(Type.HISTORY)
-class MeasurementEnabled(val enabled: Boolean) : DeviceMessage(Type.MEASUREMENT_ENABLED)
-class VersionPacket(val minor: Int, val major: Int) : DeviceMessage(Type.VERSION)
-class Battery(val capacity: Int, val charging: Boolean) : DeviceMessage(Type.BATTERY)
-class HardwareRuntime(val run: Int, val boot: Int) : DeviceMessage(Type.RUNTIME)
-class SensorData(val pm25: Int, val recordDate: Int, val unknown: Byte, val currentDate: Int) :
+object Shutdown : DeviceMessage(Type.SHUTDOWN)
+data class MeasurementInterval(val interval: Int) : DeviceMessage(Type.MEASUREMENT_INTERVAL)
+data class SetRTC(val timestamp: Int) : DeviceMessage(Type.SET_RTC)
+data class NoMoreHistory(val unknown: Byte) : DeviceMessage(Type.NO_MORE_HISTORY)
+data class History(val pm25: Int, val timestamp: Int) : DeviceMessage(Type.HISTORY)
+data class MeasurementEnabled(val enabled: Boolean) : DeviceMessage(Type.MEASUREMENT_ENABLED)
+data class VersionPacket(val minor: Int, val major: Int) : DeviceMessage(Type.VERSION)
+data class Battery(val capacity: Int, val charging: Boolean) : DeviceMessage(Type.BATTERY)
+data class HardwareRuntime(val run: Int, val boot: Int) : DeviceMessage(Type.RUNTIME)
+data class SensorData(val pm25: Int, val recordDate: Int, val unknown: Byte, val currentDate: Int) :
     DeviceMessage(Type.SENSOR)
 
-class MeasurementSetup(val interval: Int, val enabled: Boolean) : DeviceMessage(Type.MEASUREMENT)
+data class MeasurementSetup(val interval: Int, val enabled: Boolean) :
+    DeviceMessage(Type.MEASUREMENT)
