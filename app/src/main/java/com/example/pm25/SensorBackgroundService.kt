@@ -99,7 +99,7 @@ class SensorBackgroundService : Service() {
     }
 
 
-    class LocalBinder(val a: SensorBackgroundService) : BaseLocalBinder<SensorBackgroundService>(a)
+    class LocalBinder(a: SensorBackgroundService) : BaseLocalBinder<SensorBackgroundService>(a)
 
     override fun onBind(intent: Intent?): IBinder? = LocalBinder(this)
 }
