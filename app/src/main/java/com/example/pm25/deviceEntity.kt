@@ -33,7 +33,8 @@ class SensorDevice(
     var info: SensorDeviceInfo,
     pm25: Int = 0,
     battery: Int = 0,
-    charge: Boolean = false
+    charge: Boolean = false,
+    observer: (DeviceStatusUpdate) -> Unit
 ) {
     val callback = SensorDeviceGattCallback()
     var connectStatus: DeviceConnectStatus = DeviceConnectStatus.DISCONNECTED

@@ -41,7 +41,7 @@ class SensorBackgroundService : Service() {
 
     fun addDevice(device: SensorDeviceInfo) {
         check(device.address !in devices) { "address conflict: ${device.address}" }
-        val d = SensorDevice(device)
+        val d = SensorDevice(device) { notifyUpdate(it) }
         deviceList.add(d)
         devices[device.address] = d
     }
@@ -61,7 +61,7 @@ class SensorBackgroundService : Service() {
     fun getDevice(address: String) = devices[address]?.info
 
     private fun notifyUpdate(update: DeviceStatusUpdate) {
-        TODO()
+        watchers.forEach { it.invoke(update) }
     }
 
     fun storeDeviceList() {
@@ -89,7 +89,7 @@ class SensorBackgroundService : Service() {
                 recently?.pm25 ?: 0,
                 recently?.battery ?: 0,
                 recently?.charging ?: false
-            )
+            ) { notifyUpdate(it) }
         }.let {
             deviceList.clear()
             deviceList.addAll(it)
