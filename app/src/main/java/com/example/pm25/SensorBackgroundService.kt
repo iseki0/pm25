@@ -11,7 +11,7 @@ class SensorBackgroundService : Service() {
 
     private val devices = mutableMapOf<String, SensorDevice>()
     private val deviceList = mutableListOf<SensorDevice>()
-    private val watcher = mutableListOf<(DeviceStatusUpdate) -> Unit>()
+    private val watchers = mutableListOf<(DeviceStatusUpdate) -> Unit>()
     private val bluetoothManager by lazy { getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager }
     private val bluetoothAdapter by lazy { bluetoothManager.adapter!! }
 
@@ -22,13 +22,21 @@ class SensorBackgroundService : Service() {
      * @return invoke it to stop watching
      */
     fun watch(handler: (DeviceStatusUpdate) -> Unit): () -> Unit {
-        TODO()
-        return { watcher.remove(handler) }
+        if (handler !in watchers) {
+            watchers.add(handler)
+        }
+        return { watchers.remove(handler) }
     }
 
 
     fun connectDevice(address: String) {
-        TODO()
+        val d = devices[address] ?: error("device: $address not exists")
+        d.connect(this, bluetoothAdapter)
+    }
+
+    fun disconnectDevice(address: String) {
+        val d = devices[address] ?: error("device: $address not exists")
+        d.disconnect()
     }
 
     fun addDevice(device: SensorDeviceInfo) {
@@ -40,6 +48,7 @@ class SensorBackgroundService : Service() {
 
     fun removeDevice(address: String) {
         val a = devices.remove(address) ?: return
+        a.disconnect()
         deviceList.remove(a)
     }
 
@@ -56,11 +65,19 @@ class SensorBackgroundService : Service() {
     }
 
     fun storeDeviceList() {
-        TODO()
+        writeDeviceInfoToStorage(deviceList.map { it.info })
     }
 
     fun storeDeviceRecentlyStatus() {
-        TODO()
+        writeDeviceLastStatusToStorage(deviceList.map {
+            DeviceLastStatus(
+                address = it.info.address,
+                time = it.lastUpdate,
+                pm25 = it.pm25,
+                battery = it.battery,
+                charging = it.charging,
+            )
+        })
     }
 
     private fun initialization() {
