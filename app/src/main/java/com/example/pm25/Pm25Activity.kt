@@ -8,6 +8,7 @@ import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -52,7 +53,7 @@ class Pm25Activity : AppCompatActivity() {
     private val scanner by lazy { BleScanner(this, bleAdapter) }
 
     private val serviceConnection =
-        localServiceConnection<SensorService, SensorService.LocalBinder>()
+        localServiceConnection<SensorBackgroundService, SensorBackgroundService.LocalBinder>()
 
     private val mainList by lazy { DeviceListAdapter(this) }
 
@@ -62,10 +63,10 @@ class Pm25Activity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener(::clickAddButton)
         findViewById<RecyclerView>(R.id.dlist).adapter = mainList
-        startService(Intent(this, SensorService::class.java))
+        startService(Intent(this, SensorBackgroundService::class.java))
         if (!serviceConnection.isBind)
             bindService(
-                Intent(this, SensorService::class.java),
+                Intent(this, SensorBackgroundService::class.java),
                 serviceConnection,
                 Context.BIND_AUTO_CREATE
             )
@@ -88,9 +89,20 @@ class Pm25Activity : AppCompatActivity() {
                 val device = scanner.viewAdapter.getItem(i)
                 Snackbar.make(findViewById(R.id.root_view), "selected", Snackbar.LENGTH_SHORT)
                     .show()
-
             }
             .setOnCancelListener { scanner.stopScan() }
+            .setOnItemSelectedListener(object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    TODO("Not yet implemented")
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
+            })
             .show()
     }
 

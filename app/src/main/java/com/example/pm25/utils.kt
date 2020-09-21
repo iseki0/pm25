@@ -8,9 +8,7 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Looper
 import androidx.core.content.ContextCompat
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import java.io.File
 
 
 val BluetoothAdapter.isDisabled: Boolean
@@ -40,14 +38,9 @@ fun checkPermissions(c: Context, vararg ps: String) = ps.all {
 }
 
 val jsonMapper = jacksonObjectMapper()
-val configPath by lazy { File(applicationContext.filesDir, "xfdevices.json") }
 
-
-class DeviceInfo(
-    val address: String,
-    val name: String
-)
-
-object DeviceInfoConfigListType : TypeReference<MutableList<DeviceInfo>>()
 
 fun onMainThread() = Looper.myLooper() == Looper.getMainLooper()
+
+val unixTimestamp: Int
+    get() = (System.currentTimeMillis() / 1000).toInt()
