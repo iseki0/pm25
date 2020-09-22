@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.pm25"
-        minSdkVersion 22
+        minSdkVersion 29
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -47,8 +47,10 @@ dependencies {
 
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+"
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.11.2'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.2'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.11.2'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.2'
+// https://mvnrepository.com/artifact/joda-time/joda-time
+//    implementation group: 'joda-time', name: 'joda-time', version: '2.10.6'
 
 
 }

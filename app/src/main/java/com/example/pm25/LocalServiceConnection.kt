@@ -15,6 +15,9 @@ class LocalServiceConnection<T : Service, B : BaseLocalBinder<T>> : ServiceConne
         get() = _s != null
 
     private var _s: T? = null
+
+    private val list = mutableListOf<(T) -> Unit>()
+
     override fun onServiceConnected(name: ComponentName?, service: IBinder) {
         val _s = _s
         if (_s != null) {
@@ -24,11 +27,20 @@ class LocalServiceConnection<T : Service, B : BaseLocalBinder<T>> : ServiceConne
         @Suppress("UNCHECKED_CAST")
         this._s = (service as B).service
         Log.d("SimpleServiceConnection", "connect: $name")
-
+        list.forEach { it.invoke(this.service) }
+        list.clear()
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
         Log.d("SimpleServiceConnection", "disconnect: $name")
+    }
+
+    fun onceBind(handler: (T) -> Unit) {
+        if (isBind) {
+            handler
+        } else {
+            list.add(handler)
+        }
     }
 }
 

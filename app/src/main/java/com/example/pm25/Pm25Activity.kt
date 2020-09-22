@@ -1,5 +1,6 @@
 package com.example.pm25
 
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
@@ -8,13 +9,15 @@ import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 
 private val neededPermissions =
@@ -22,7 +25,14 @@ private val neededPermissions =
 
 class DeviceListAdapter(context: Context) :
     RecyclerView.Adapter<DeviceListAdapter.ViewHolder>() {
-    private val devs = mutableListOf<Any>()
+    private var list: MutableList<DeviceStatusUpdate> = mutableListOf()
+
+    var sensors: List<DeviceStatusUpdate>
+        set(value) {
+            list = sensors.toMutableList()
+            this.notifyDataSetChanged()
+        }
+        get() = list
 
     private val inflater = LayoutInflater.from(context)!!
 
@@ -37,11 +47,28 @@ class DeviceListAdapter(context: Context) :
         return ViewHolder(view)
     }
 
-    override fun getItemCount(): Int = devs.size
+    override fun getItemCount(): Int = list.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        TODO("Not yet implemented")
+        val u = list[position]
+        val battery = u.battery
+        val name = "${u.info.name}($battery%)"
+        holder.name.text = name
+        val lastSeen = Instant.ofEpochSecond(u.lastUpdate + 0L)
+            .atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        val address = "${u.info.address}($lastSeen)"
+        holder.address.text = address
+        holder.pm25.text = u.pm25.toString()
     }
+
+    fun processUpdate(update: DeviceStatusUpdate) {
+        val address = update.info.address
+        val pos = list.indexOfFirst { it.info.address == address }
+        if (pos < 0) return
+        list[pos] = update
+        notifyItemChanged(pos)
+    }
+
 
 }
 
@@ -51,11 +78,20 @@ class Pm25Activity : AppCompatActivity() {
     private val bleAdapter by lazy { bleManager.adapter!! }
     private val locationManager by lazy { getSystemService(Context.LOCATION_SERVICE) as LocationManager }
     private val scanner by lazy { BleScanner(this, bleAdapter) }
+    private val bgService: SensorBackgroundService
+        get() = serviceConnection.service
 
     private val serviceConnection =
         localServiceConnection<SensorBackgroundService, SensorBackgroundService.LocalBinder>()
 
     private val mainList by lazy { DeviceListAdapter(this) }
+
+    private val updateWatcher = { update: DeviceStatusUpdate ->
+        mainList.processUpdate(update)
+    }
+
+    // TODO: refactor WTF???
+    private var canceler = {}
 
     override fun onStart() {
         super.onStart()
@@ -65,17 +101,35 @@ class Pm25Activity : AppCompatActivity() {
         findViewById<RecyclerView>(R.id.dlist).adapter = mainList
         startService(Intent(this, SensorBackgroundService::class.java))
         if (!serviceConnection.isBind)
-            bindService(
-                Intent(this, SensorBackgroundService::class.java),
-                serviceConnection,
-                Context.BIND_AUTO_CREATE
-            )
+            bindBackgroundService()
+        serviceConnection.onceBind {
+            refreshDeviceList()
+            canceler = bgService.watch(updateWatcher)
+        }
     }
 
     override fun onStop() {
         super.onStop()
+        canceler.invoke()
         if (serviceConnection.isBind)
             unbindService(serviceConnection)
+    }
+
+    private fun addDevice(device: BluetoothDevice) {
+        bgService.addDevice(
+            SensorDeviceInfo(
+                address = device.address,
+                name = device.name ?: "<no name>",
+            )
+        )
+        refreshDeviceList()
+        bgService.connectDevice(device.address)
+    }
+
+    private fun refreshDeviceList() {
+        val l = bgService.deviceInfos
+        println(l)
+        mainList.sensors = l
     }
 
 
@@ -85,24 +139,20 @@ class Pm25Activity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Select your device")
             .setAdapter(scanner.viewAdapter) { _, i ->
+                // TODO: ugly code
                 scanner.stopScan()
                 val device = scanner.viewAdapter.getItem(i)
-                Snackbar.make(findViewById(R.id.root_view), "selected", Snackbar.LENGTH_SHORT)
+                val address = device.address
+                val name = device.name ?: "<no name>"
+                Snackbar.make(
+                    findViewById(R.id.root_view),
+                    "selected: $name ($address)",
+                    Snackbar.LENGTH_SHORT
+                )
                     .show()
+                addDevice(device)
             }
             .setOnCancelListener { scanner.stopScan() }
-            .setOnItemSelectedListener(object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    TODO("Not yet implemented")
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {}
-            })
             .show()
     }
 
@@ -136,5 +186,12 @@ class Pm25Activity : AppCompatActivity() {
         return false
     }
 
+    private fun bindBackgroundService() {
+        bindService(
+            Intent(this, SensorBackgroundService::class.java),
+            serviceConnection,
+            Context.BIND_AUTO_CREATE
+        )
+    }
 }
 

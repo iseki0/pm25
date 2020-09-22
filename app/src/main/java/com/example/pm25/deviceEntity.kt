@@ -34,7 +34,7 @@ class SensorDevice(
     pm25: Int = 0,
     battery: Int = 0,
     charge: Boolean = false,
-    observer: (DeviceStatusUpdate) -> Unit
+    private val observer: (DeviceStatusUpdate) -> Unit
 ) {
     val callback = SensorDeviceGattCallback()
     var connectStatus: DeviceConnectStatus = DeviceConnectStatus.DISCONNECTED
@@ -72,12 +72,16 @@ class SensorDevice(
                 else -> error("")
             }
             if (isConnected()) {
-                val s = gatt.getService(DEVICE_UART_SERVICE)!!
-                rx = s.getCharacteristic(DEVICE_UART_RX)
-                tx = s.getCharacteristic(DEVICE_UART_TX)
-                gatt.setCharacteristicNotification(tx, true)
-                debug("enable rx notif: $tx")
+                gatt.discoverServices()
             }
+        }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            val s = gatt.getService(DEVICE_UART_SERVICE)!!
+            rx = s.getCharacteristic(DEVICE_UART_RX)
+            tx = s.getCharacteristic(DEVICE_UART_TX)
+            gatt.setCharacteristicNotification(tx, true)
+            debug("enable rx notif: $tx")
         }
 
         override fun onCharacteristicChanged(
@@ -109,7 +113,7 @@ class SensorDevice(
         }
 
         private fun notifyUpdate() {
-            TODO()
+            this@SensorDevice.observer(toUpdate())
         }
 
         private fun debug(s: String) {
