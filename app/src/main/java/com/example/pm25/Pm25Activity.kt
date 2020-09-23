@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.location.LocationManager
-import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -191,10 +190,9 @@ class Pm25Activity : AppCompatActivity() {
         if (checkPermissions(this, *neededPermissions)) return true
         AlertDialog.Builder(this).setMessage("Location and Bluetooth permission is required.")
             .setPositiveButton("Ok") { _, _ ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    requestPermissions(neededPermissions, 1)
-                }
+                requestPermissions(neededPermissions, 1)
             }
+            .show()
         return false
     }
 
