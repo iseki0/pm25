@@ -32,6 +32,7 @@ class LocalServiceConnection<T : Service, B : BaseLocalBinder<T>> : ServiceConne
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
+        _s = null
         Log.d("SimpleServiceConnection", "disconnect: $name")
     }
 

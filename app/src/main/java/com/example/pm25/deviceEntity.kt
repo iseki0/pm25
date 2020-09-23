@@ -51,9 +51,10 @@ class SensorDevice(
 
     fun connect(context: Context, adapter: BluetoothAdapter) {
         BluetoothAdapter.checkBluetoothAddress(info.address)
-        if (!isConnected()) {
-            val device = adapter.getRemoteDevice(info.address)
-            gatt = device.connectGatt(context, false, callback)
+        if (connectStatus == DeviceConnectStatus.DISCONNECTED) {
+            val d = adapter.getRemoteDevice(info.address)!!
+            d.connectGatt(context, false, callback)
+            connectStatus = DeviceConnectStatus.CONNECTING
         }
     }
 
@@ -66,22 +67,25 @@ class SensorDevice(
         private lateinit var tx: BluetoothGattCharacteristic
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             debug("onConnectionStateChange[$status]: $newState")
-            connectStatus = when (newState) {
-                BluetoothProfile.STATE_DISCONNECTED -> DeviceConnectStatus.DISCONNECTED
-                BluetoothProfile.STATE_CONNECTED -> DeviceConnectStatus.CONNECTED
-                else -> error("")
-            }
-            if (isConnected()) {
-                gatt.discoverServices()
+            when (newState) {
+                BluetoothProfile.STATE_DISCONNECTED -> connectStatus =
+                    DeviceConnectStatus.DISCONNECTED
+                BluetoothProfile.STATE_CONNECTED -> {
+                    gatt.discoverServices()
+                }
             }
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            val s = gatt.getService(DEVICE_UART_SERVICE)!!
+            val s = gatt.getService(DEVICE_UART_SERVICE) ?: return
             rx = s.getCharacteristic(DEVICE_UART_RX)
             tx = s.getCharacteristic(DEVICE_UART_TX)
             gatt.setCharacteristicNotification(tx, true)
-            debug("enable rx notif: $tx")
+            val txd = tx.getDescriptor(CCCD)
+            txd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            gatt.writeDescriptor(txd)
+            connectStatus = DeviceConnectStatus.CONNECTED
+            debug("enable tx notif: $tx")
         }
 
         override fun onCharacteristicChanged(

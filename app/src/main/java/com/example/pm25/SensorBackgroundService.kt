@@ -108,6 +108,6 @@ enum class DeviceConnectStatus {
     CONNECTED, DISCONNECTED, CONNECTING, ERROR
 }
 
-fun SensorDevice.isConnected() = this.connectStatus == DeviceConnectStatus.CONNECTED
+
 
 

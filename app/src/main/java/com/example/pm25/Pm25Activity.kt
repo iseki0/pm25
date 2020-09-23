@@ -1,5 +1,6 @@
 package com.example.pm25
 
+import android.app.Activity
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
@@ -12,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
@@ -23,14 +25,16 @@ import java.time.format.DateTimeFormatter
 private val neededPermissions =
     arrayOf("android.permission.BLUETOOTH", "android.permission.ACCESS_FINE_LOCATION")
 
-class DeviceListAdapter(context: Context) :
+class DeviceListAdapter(val context: Activity) :
     RecyclerView.Adapter<DeviceListAdapter.ViewHolder>() {
     private var list: MutableList<DeviceStatusUpdate> = mutableListOf()
 
     var sensors: List<DeviceStatusUpdate>
         set(value) {
-            list = sensors.toMutableList()
-            this.notifyDataSetChanged()
+            context.runOnUiThread {
+                list = value.toMutableList()
+                notifyDataSetChanged()
+            }
         }
         get() = list
 
@@ -43,7 +47,7 @@ class DeviceListAdapter(context: Context) :
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = inflater.inflate(R.layout.device_item, parent)!!
+        val view = inflater.inflate(R.layout.device_item, parent, false)!!
         return ViewHolder(view)
     }
 
@@ -62,11 +66,14 @@ class DeviceListAdapter(context: Context) :
     }
 
     fun processUpdate(update: DeviceStatusUpdate) {
-        val address = update.info.address
-        val pos = list.indexOfFirst { it.info.address == address }
-        if (pos < 0) return
-        list[pos] = update
-        notifyItemChanged(pos)
+        context.runOnUiThread {
+            val address = update.info.address
+            val pos = list.indexOfFirst { it.info.address == address }
+            if (pos < 0) return@runOnUiThread
+            list[pos] = update
+            notifyItemChanged(pos)
+            println("notify change: $pos")
+        }
     }
 
 
@@ -98,7 +105,12 @@ class Pm25Activity : AppCompatActivity() {
         setContentView(R.layout.pm25_activity)
         setSupportActionBar(findViewById(R.id.toolbar))
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener(::clickAddButton)
-        findViewById<RecyclerView>(R.id.dlist).adapter = mainList
+        findViewById<RecyclerView>(R.id.dlist).apply {
+            setHasFixedSize(false)
+            layoutManager = LinearLayoutManager(this@Pm25Activity)
+            adapter = mainList
+        }
+
         startService(Intent(this, SensorBackgroundService::class.java))
         if (!serviceConnection.isBind)
             bindBackgroundService()
