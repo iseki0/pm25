@@ -1,4 +1,4 @@
-package com.example.pm25
+package space.iseki.pm25
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.le.ScanCallback

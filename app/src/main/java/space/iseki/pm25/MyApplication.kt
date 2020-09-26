@@ -1,4 +1,4 @@
-package com.example.pm25
+package space.iseki.pm25
 
 import android.app.Application
 import android.content.Context
@@ -9,7 +9,7 @@ class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        com.example.pm25.applicationContext = applicationContext
+        space.iseki.pm25.applicationContext = applicationContext
     }
 }
 

@@ -1,4 +1,4 @@
-package com.example.pm25
+package space.iseki.pm25
 
 import android.app.Service
 import android.bluetooth.BluetoothManager

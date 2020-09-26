@@ -1,4 +1,4 @@
-package com.example.pm25
+package space.iseki.pm25
 
 import com.fasterxml.jackson.core.type.TypeReference
 import java.io.File

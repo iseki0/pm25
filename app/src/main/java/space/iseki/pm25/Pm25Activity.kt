@@ -1,4 +1,4 @@
-package com.example.pm25
+package space.iseki.pm25
 
 import android.app.Activity
 import android.bluetooth.BluetoothDevice
@@ -14,6 +14,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.pm25.R
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import java.time.Instant

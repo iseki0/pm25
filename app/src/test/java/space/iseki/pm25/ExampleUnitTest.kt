@@ -1,4 +1,4 @@
-package com.example.pm25
+package space.iseki.pm25
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

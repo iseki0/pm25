@@ -5,7 +5,7 @@
     android:id="@+id/root_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Pm25Activity">
+    tools:context="space.iseki.pm25.Pm25Activity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"

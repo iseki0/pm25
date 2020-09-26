@@ -1,6 +1,6 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
-package com.example.pm25
+package space.iseki.pm25
 
 fun parsePacket(buf: ByteArray): DeviceMessage {
     check(buf[0] == 0xaa.toByte()) { "magic header error: ${buf[0]}" }

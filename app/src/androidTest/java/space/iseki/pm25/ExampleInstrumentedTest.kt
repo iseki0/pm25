@@ -1,4 +1,4 @@
-package com.example.pm25
+package space.iseki.pm25
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry

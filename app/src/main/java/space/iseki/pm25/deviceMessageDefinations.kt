@@ -1,4 +1,4 @@
-package com.example.pm25
+package space.iseki.pm25
 
 sealed class DeviceMessage(val type: Type) {
     enum class Type(val value: Byte) {

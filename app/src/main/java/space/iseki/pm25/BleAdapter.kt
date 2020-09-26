@@ -1,4 +1,4 @@
-package com.example.pm25
+package space.iseki.pm25
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
+import com.example.pm25.R
 
 class BleAdapter(context: Context) : BaseAdapter() {
 
