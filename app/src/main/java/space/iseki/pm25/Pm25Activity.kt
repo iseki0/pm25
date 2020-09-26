@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.location.LocationManager
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +18,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.pm25.R
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import com.microsoft.appcenter.AppCenter
+import com.microsoft.appcenter.analytics.Analytics
+import com.microsoft.appcenter.crashes.Crashes
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -95,6 +99,14 @@ class Pm25Activity : AppCompatActivity() {
 
     private val updateWatcher = { update: DeviceStatusUpdate ->
         mainList.processUpdate(update)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AppCenter.start(
+            application, "9e060c4a-9366-4232-a03c-30ef47af6fdb",
+            Analytics::class.java, Crashes::class.java
+        )
     }
 
     // TODO: refactor WTF???

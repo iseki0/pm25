@@ -52,5 +52,8 @@ dependencies {
 // https://mvnrepository.com/artifact/joda-time/joda-time
 //    implementation group: 'joda-time', name: 'joda-time', version: '2.10.6'
 
+    def appCenterSdkVersion = '3.3.1'
+    implementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
+    implementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
 
 }
