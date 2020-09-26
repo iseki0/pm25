@@ -74,6 +74,7 @@ class SensorDevice(
                     gatt.discoverServices()
                 }
             }
+            notifyUpdate()
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
@@ -86,6 +87,7 @@ class SensorDevice(
             gatt.writeDescriptor(txd)
             connectStatus = DeviceConnectStatus.CONNECTED
             debug("enable tx notif: $tx")
+            notifyUpdate()
         }
 
         override fun onCharacteristicChanged(
