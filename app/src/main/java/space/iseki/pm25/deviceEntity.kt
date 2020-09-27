@@ -38,7 +38,6 @@ class SensorDevice(
 ) {
     val callback = SensorDeviceGattCallback()
     var connectStatus: DeviceConnectStatus = DeviceConnectStatus.DISCONNECTED
-    var gatt: BluetoothGatt? = null
 
     var pm25 = pm25
         private set
@@ -59,17 +58,23 @@ class SensorDevice(
     }
 
     fun disconnect() {
-        gatt?.disconnect()
+        callback.disconnect()
+    }
+
+    fun writeCommand(command: DeviceCommand) {
+        callback.writeCommand(command)
     }
 
     inner class SensorDeviceGattCallback : BluetoothGattCallback() {
-        private lateinit var rx: BluetoothGattCharacteristic
-        private lateinit var tx: BluetoothGattCharacteristic
+        private var rx: BluetoothGattCharacteristic? = null
+        private var tx: BluetoothGattCharacteristic? = null
+        private var gatt: BluetoothGatt? = null
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             debug("onConnectionStateChange[$status]: $newState")
+            this.gatt = gatt
             when (newState) {
-                BluetoothProfile.STATE_DISCONNECTED -> connectStatus =
-                    DeviceConnectStatus.DISCONNECTED
+                BluetoothProfile.STATE_DISCONNECTED ->
+                    connectStatus = DeviceConnectStatus.DISCONNECTED
                 BluetoothProfile.STATE_CONNECTED -> {
                     gatt.discoverServices()
                 }
@@ -79,8 +84,10 @@ class SensorDevice(
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             val s = gatt.getService(DEVICE_UART_SERVICE) ?: return
-            rx = s.getCharacteristic(DEVICE_UART_RX)
-            tx = s.getCharacteristic(DEVICE_UART_TX)
+            val rx = s.getCharacteristic(DEVICE_UART_RX)
+            this.rx = rx
+            val tx = s.getCharacteristic(DEVICE_UART_TX)
+            this.tx = tx
             gatt.setCharacteristicNotification(tx, true)
             val txd = tx.getDescriptor(CCCD)
             txd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
@@ -94,17 +101,22 @@ class SensorDevice(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            val tx = this.tx
             if (characteristic == tx) {
                 runCatching {
-                    val packet = parsePacket(tx.value)
-                    debug(packet.toString())
-                    when (packet) {
+                    when (val packet = parsePacket(tx.value)) {
                         is Battery -> updateBattery(packet)
                         is SensorData -> updateSensorValue(packet)
                     }
                     lastUpdate = unixTimestamp
                 }
             }
+        }
+
+        fun disconnect() {
+            gatt?.close() ?: return
+            connectStatus = DeviceConnectStatus.DISCONNECTED
+            notifyUpdate()
         }
 
         private fun updateSensorValue(packet: SensorData) {
@@ -125,5 +137,13 @@ class SensorDevice(
         private fun debug(s: String) {
             Log.d("SensorDevCallBack", s)
         }
+
+        fun writeCommand(command: DeviceCommand) {
+            val rx = this.rx ?: return
+            val gatt = this.gatt ?: return
+            rx.value = command.toByteArray()
+            gatt.writeCharacteristic(rx)
+        }
+
     }
 }

@@ -28,6 +28,10 @@ class SensorBackgroundService : Service() {
         return { watchers.remove(handler) }
     }
 
+    fun writeCommandToDevice(command: DeviceCommand, address: String) {
+        val d = devices[address] ?: error("device: $address not exists")
+        d.writeCommand(command)
+    }
 
     fun connectDevice(address: String) {
         val d = devices[address] ?: error("device: $address not exists")

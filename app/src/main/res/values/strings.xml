@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">PM25</string>
+    <string-array name="item_user_action">
+        <item>Connect</item>
+        <item>Disconnect</item>
+        <item>Remove</item>
+        <item>SetFreq</item>
+        <item>Rename</item>
+        <item>Shutdown</item>
+    </string-array>
 </resources>

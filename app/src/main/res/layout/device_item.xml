@@ -1,39 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.widget.LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:id="@+id/dev_item_wrapper"
+    android:layout_height="wrap_content"
+    android:layout_margin="6sp"
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/dev_name"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Device Name"
-            android:textSize="16sp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/dev_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Device Name"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/dev_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Device Address" />
+
+            <TextView
+                android:id="@+id/dev_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Device Status" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/dev_pm25"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="999"
+            android:textSize="32sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/dev_address"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Device Address" />
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1" />
-
-    <TextView
-        android:id="@+id/dev_pm25"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="999"
-        android:textSize="32sp"
-        android:textStyle="bold" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"></LinearLayout>
 
 </android.widget.LinearLayout>
